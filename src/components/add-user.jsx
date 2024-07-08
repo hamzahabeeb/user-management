@@ -46,7 +46,6 @@ function AddUser() {
                 id="name"
                 type="text"
                 name="name"
-                onChange=""
                 placeholder="Name"
               />
             </div>
@@ -63,7 +62,6 @@ function AddUser() {
                 id="email"
                 type="email"
                 name="email"
-                onChange=""
                 placeholder="Email"
               />
             </div>
@@ -79,7 +77,6 @@ function AddUser() {
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 id="role"
                 name="role"
-                onChange=""
               >
                 <option value="Admin">admin</option>
                 <option value="User">user</option>
