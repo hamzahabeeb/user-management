@@ -17,10 +17,13 @@ function UserList() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isChangePasswordOpen, setChangePasswordOpen] = useState(false);
   const [isSearchString, setSearchString] = useState("");
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const [usersPerPage] = useState(5);
 
   useEffect(() => {
     getUsers();
-  }, []);
+  }, [currentPage]);
 
   const getUsers = async () => {
     try {
@@ -85,59 +88,90 @@ function UserList() {
   };
 
   const searchUsers = () => {
-    const filteredUsers = users.filter(user =>
-      user.name.toLowerCase().includes(isSearchString.toLowerCase())
-    );
-    setUsers(filteredUsers);
-  
+    if (isSearchString === "") {
+      getUsers();
+    } else {
+      const filteredUsers = users.filter((user) =>
+        user.name.toLowerCase().includes(isSearchString.toLowerCase())
+      );
+      setUsers(filteredUsers);
+    }
   };
-  
-  
-  
+
+  const searchRoleUser = async (field, value) => {
+    try {
+      let queryParams = "";
+      if (value !== "All" && value !== "") {
+        queryParams = `?${field}=${value}`;
+      }
+      const { data } = await axios.get(
+        "http://localhost:8000/users" + queryParams
+      );
+      console.log(queryParams);
+      console.log(data);
+      setUsers(data);
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = users.slice(indexOfFirstUser, indexOfLastUser);
+  const totalPages = Math.ceil(users.length / usersPerPage);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
   return (
     <div className="bg-gray-100 min-h-screen">
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="flex justify-between mb-4">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search users..."
-              className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-3 pr-10 sm:text-sm border-gray-300 rounded-md"
-              onChange={(event) => setSearchString(event.target.value )}
-            />
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-              <svg
-                className="h-5 w-5 text-gray-400 cursor-pointer"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
-                onClick={searchUsers}
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zM9 6a1 1 0 112 0v6a1 1 0 11-2 0V6z"
-                  clipRule="evenodd"
-                />
-              </svg>
+        <div className="flex justify-between items-center mb-4">
+          <button
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            onClick={handleAddClickView}
+          >
+            Add User
+          </button>
+          <div className="flex space-x-4">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search users..."
+                className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-3 pr-10 sm:text-sm border-gray-300 rounded-md"
+                onChange={(event) => setSearchString(event.target.value)}
+              />
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <svg
+                  className="h-5 w-5 text-gray-400 cursor-pointer"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                  onClick={searchUsers}
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zM9 6a1 1 112 0v6a1 1 112 0V6z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
             </div>
-          </div>
-          <div>
             <select
-              value=""
-              className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block sm:text-sm border-gray-300 rounded-md"
+              className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block sm:text-sm border-gray-300 rounded-md cursor-pointer"
+              onChange={(event) => searchRoleUser("role", event.target.value)}
             >
               <option value="All">All Roles</option>
               <option value="Admin">Admin</option>
               <option value="User">User</option>
             </select>
-          </div>
-          <div>
             <select
-              value=""
-              className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block sm:text-sm border-gray-300 rounded-md"
+              className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block sm:text-sm border-gray-300 rounded-md cursor-pointer"
+              onChange={(event) => searchRoleUser("status", event.target.value)}
             >
-              <option value="All">All Statuses</option>
+              <option value="All">All Status</option>
               <option value="Active">Active</option>
               <option value="Inactive">Inactive</option>
             </select>
@@ -166,7 +200,7 @@ function UserList() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {users.map((user) => (
+              {currentUsers.map((user) => (
                 <tr key={user.id}>
                   <td className="px-6 py-4 whitespace-nowrap">{user.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
@@ -208,51 +242,21 @@ function UserList() {
             </tbody>
           </table>
         </div>
-
-        {/* Pagination
-          <div className="mt-4">
-            <nav className="flex justify-end" aria-label="Pagination">
-              <ul className="inline-flex items-center">
-                <li>
-                  <button
-                    onClick={() => paginate(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className={`px-3 py-1 rounded-md ${
-                      currentPage === 1 ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-white text-gray-700'
-                    }`}
-                  >
-                    Previous
-                  </button>
-                </li>
-                {Array.from({ length: Math.ceil(filteredUsers.length / usersPerPage) }, (_, index) => (
-                  <li key={index}>
-                    <button
-                      onClick={() => paginate(index + 1)}
-                      className={`ml-2 px-3 py-1 rounded-md ${
-                        currentPage === index + 1 ? 'bg-blue-500 text-white' : 'bg-white text-gray-700'
-                      }`}
-                    >
-                      {index + 1}
-                    </button>
-                  </li>
-                ))}
-                <li>
-                  <button
-                    onClick={() => paginate(currentPage + 1)}
-                    disabled={currentPage === Math.ceil(filteredUsers.length / usersPerPage)}
-                    className={`ml-2 px-3 py-1 rounded-md ${
-                      currentPage === Math.ceil(filteredUsers.length / usersPerPage)
-                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                        : 'bg-white text-gray-700'
-                    }`}
-                  >
-                    Next
-                  </button>
-                </li>
-              </ul>
-            </nav>
-          </div> */}
-      </div>
+        <div className="flex justify-center mt-4">
+          {Array.from({ length: totalPages }, (_, index) => (
+            <button
+              key={index}
+              className={`px-4 py-2 mx-1 border rounded ${
+                currentPage === index + 1 ? "bg-blue-500 text-white" : "bg-white text-blue-500"
+              }`}
+              onClick={() => handlePageChange(index + 1)}
+            >
+              {index + 1}
+            </button>
+          ))}
+        </div>
+        
+        </div>
       <UserContext.Provider
         value={{
           getUsers,
